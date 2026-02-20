@@ -29,3 +29,9 @@ variable "project_name" {
   description = "Project name for resource naming"
   default     = "web-app"
 }
+
+variable "eip_allocation_id" {
+  type        = string
+  description = "Elastic IP allocation ID to import"
+  default     = ""
+}

@@ -15,23 +15,29 @@ locals {
 # Development environment deployment
 deployment "dev" {
   inputs = {
-    aws_region     = "us-east-1"
-    environment    = "dev"
-    instance_type  = "t3.nano"  # ~$3.80/month (730 hours)
-    role_arn       = local.role_arn
-    identity_token = identity_token.aws.jwt
-    project_name   = local.project_name
+    aws_region        = "us-east-1"
+    environment       = "dev"
+    instance_type     = "t3.nano"  # ~$3.80/month (730 hours)
+    role_arn          = local.role_arn
+    identity_token    = identity_token.aws.jwt
+    project_name      = local.project_name
+    eip_allocation_id = "eipalloc-0860eb1e7695c117f"  # Dev EIP
   }
+
+  destroy = true
 }
 
 # Production environment deployment
 deployment "prod" {
   inputs = {
-    aws_region     = "us-west-2"
-    environment    = "prod"
-    instance_type  = "t3.small"  # ~$15/month for better performance
-    role_arn       = local.role_arn
-    identity_token = identity_token.aws.jwt
-    project_name   = local.project_name
+    aws_region        = "us-west-2"
+    environment       = "prod"
+    instance_type     = "t3.small"  # ~$15/month for better performance
+    role_arn          = local.role_arn
+    identity_token    = identity_token.aws.jwt
+    project_name      = local.project_name
+    eip_allocation_id = "eipalloc-0573d89410f3ab8bf"  # Prod EIP
   }
+
+  destroy = true
 }

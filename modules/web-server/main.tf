@@ -36,7 +36,7 @@ data "aws_subnets" "default" {
 }
 
 # Security group for web server
-resource "aws_security_group" "web" {
+resource "aws_security_group" "web_server" {
   name_prefix = "${var.project_name}-${var.environment}-"
   description = "Security group for ${var.environment} web server"
   vpc_id      = data.aws_vpc.default.id
@@ -129,11 +129,11 @@ locals {
 }
 
 # EC2 instance for web server
-resource "aws_instance" "web" {
+resource "aws_instance" "web_server" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = var.instance_type
 
-  vpc_security_group_ids = [aws_security_group.web.id]
+  vpc_security_group_ids = [aws_security_group.web_server.id]
   subnet_id              = data.aws_subnets.default.ids[0]
 
   user_data                   = local.user_data
@@ -145,3 +145,26 @@ resource "aws_instance" "web" {
     ManagedBy   = "Terraform Stacks"
   }
 }
+
+# Elastic IP for the web server (REMOVED from management)
+# Keeping the EIP allocated in AWS but Terraform no longer manages it
+# resource "aws_eip" "web" {
+#   count = var.eip_allocation_id != "" ? 1 : 0
+#
+#   domain   = "vpc"
+#   instance = aws_instance.web_server.id
+#
+#   tags = {
+#     Name        = "${var.project_name}-${var.environment}-eip"
+#     Environment = var.environment
+#     ManagedBy   = "Terraform Stacks"
+#   }
+#
+#   lifecycle {
+#     # Prevent Terraform from trying to modify the allocation
+#     # since we're importing an existing one
+#     ignore_changes = [
+#       tags["Purpose"],  # Keep the import demo tag
+#     ]
+#   }
+# }
