@@ -1,0 +1,243 @@
+# Example Refactoring Blocks for Terraform Stacks
+#
+# This file shows practical examples of using moved, removed, and import blocks
+# in a local module within Terraform Stacks.
+#
+# INSTRUCTIONS:
+# 1. Rename this file to refactoring.tf when you need to use it
+# 2. Uncomment and modify the examples below for your use case
+# 3. Upload the stack configuration to apply changes
+# 4. After successful application, DELETE this file
+# 5. Upload configuration again to clean up
+#
+# See REFACTORING-GUIDE.md for detailed documentation
+
+# ============================================================================
+# MOVED BLOCK EXAMPLES
+# ============================================================================
+
+# Example 1: Rename a resource
+# Scenario: You want to rename aws_instance.web to aws_instance.web_server
+#
+# moved {
+#   from = aws_instance.web
+#   to   = aws_instance.web_server
+# }
+#
+# Then update main.tf to use the new name:
+# resource "aws_instance" "web_server" { ... }
+
+
+# Example 2: Move from count to for_each
+# Scenario: Converting indexed instances to named instances
+#
+# moved {
+#   from = aws_instance.web[0]
+#   to   = aws_instance.web["primary"]
+# }
+#
+# moved {
+#   from = aws_instance.web[1]
+#   to   = aws_instance.web["secondary"]
+# }
+#
+# Then update main.tf:
+# resource "aws_instance" "web" {
+#   for_each = toset(["primary", "secondary"])
+#   ...
+# }
+
+
+# Example 3: Rename security group
+# Scenario: Better naming convention for security group
+#
+# moved {
+#   from = aws_security_group.web
+#   to   = aws_security_group.web_server
+# }
+
+
+# ============================================================================
+# REMOVED BLOCK EXAMPLES
+# ============================================================================
+
+# Example 1: Stop managing a resource without destroying it
+# Scenario: You want to keep an old security group running but remove from Terraform state
+#
+# removed {
+#   from = aws_security_group.legacy
+#
+#   lifecycle {
+#     destroy = false  # CRITICAL: Prevents destruction
+#   }
+# }
+#
+# Also remove/comment out the resource block in main.tf:
+# # resource "aws_security_group" "legacy" { ... }
+
+
+# Example 2: Hand off resource to another team
+# Scenario: Another team will manage this EC2 instance
+#
+# removed {
+#   from = aws_instance.shared_service
+#
+#   lifecycle {
+#     destroy = false
+#   }
+# }
+
+
+# ============================================================================
+# IMPORT BLOCK EXAMPLES
+# ============================================================================
+
+# Example 1: Import an existing EC2 instance
+# Scenario: You manually created an EC2 instance and want Terraform to manage it
+#
+# import {
+#   to = aws_instance.existing_web
+#   id = "i-0123456789abcdef0"  # Replace with actual instance ID
+# }
+#
+# Then add the resource block in main.tf with matching configuration:
+# resource "aws_instance" "existing_web" {
+#   ami           = "ami-12345678"  # Must match existing
+#   instance_type = "t3.nano"       # Must match existing
+#   # ... other configuration
+# }
+
+
+# Example 2: Import an Elastic IP
+# Scenario: You have an existing EIP you want to attach to your instance
+#
+# import {
+#   to = aws_eip.web
+#   id = "eipalloc-0123456789abcdef"  # Replace with actual allocation ID
+# }
+#
+# Then add the resource block in main.tf:
+# resource "aws_eip" "web" {
+#   domain   = "vpc"
+#   instance = aws_instance.web_server.id
+#   tags = {
+#     Name = "${var.project_name}-${var.environment}-eip"
+#   }
+# }
+
+
+# Example 3: Import existing security group
+# Scenario: Import a manually created security group
+#
+# import {
+#   to = aws_security_group.imported
+#   id = "sg-0123456789abcdef0"  # Replace with actual security group ID
+# }
+#
+# Then add the resource block with matching configuration:
+# resource "aws_security_group" "imported" {
+#   name        = "existing-sg-name"  # Must match exactly
+#   description = "Existing security group"
+#   vpc_id      = data.aws_vpc.default.id
+#
+#   # Match existing ingress/egress rules exactly
+#   ingress {
+#     from_port   = 80
+#     to_port     = 80
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+# }
+
+
+# ============================================================================
+# DEPLOYMENT-SPECIFIC IMPORTS
+# ============================================================================
+
+# Example: Import different instances per deployment (dev vs prod)
+#
+# In variables.tf, add:
+# variable "import_instance_id" {
+#   type        = string
+#   description = "Instance ID to import (empty string to skip import)"
+#   default     = ""
+# }
+#
+# Then use conditional import:
+# import {
+#   to = aws_instance.imported[0]
+#   id = var.import_instance_id
+# }
+#
+# resource "aws_instance" "imported" {
+#   count = var.import_instance_id != "" ? 1 : 0
+#   # ... configuration
+# }
+#
+# In deployments.tfdeploy.hcl:
+# deployment "dev" {
+#   inputs = {
+#     import_instance_id = "i-devinstance123"
+#     # ...
+#   }
+# }
+#
+# deployment "prod" {
+#   inputs = {
+#     import_instance_id = "i-prodinstance456"
+#     # ...
+#   }
+# }
+
+
+# ============================================================================
+# COMBINED REFACTORING EXAMPLE
+# ============================================================================
+
+# Real-world scenario: Restructuring your web server setup
+#
+# 1. Rename instance
+# moved {
+#   from = aws_instance.web
+#   to   = aws_instance.web_server
+# }
+#
+# 2. Import existing EIP
+# import {
+#   to = aws_eip.web
+#   id = "eipalloc-abc123def456"
+# }
+#
+# 3. Remove old unused security group from state
+# removed {
+#   from = aws_security_group.old_deprecated
+#   lifecycle {
+#     destroy = false
+#   }
+# }
+
+
+# ============================================================================
+# USEFUL AWS CLI COMMANDS FOR FINDING RESOURCE IDS
+# ============================================================================
+
+# Get EC2 instance IDs and names:
+# aws ec2 describe-instances \
+#   --query 'Reservations[].Instances[].[InstanceId,Tags[?Key==`Name`].Value|[0],State.Name]' \
+#   --output table
+
+# Get Security Group IDs:
+# aws ec2 describe-security-groups \
+#   --query 'SecurityGroups[].[GroupId,GroupName,Description]' \
+#   --output table
+
+# Get Elastic IP allocation IDs:
+# aws ec2 describe-addresses \
+#   --query 'Addresses[].[AllocationId,PublicIp,InstanceId]' \
+#   --output table
+
+# Get details of specific instance:
+# aws ec2 describe-instances --instance-ids i-1234567890abcdef0
+
+# Get details of specific security group:
+# aws ec2 describe-security-groups --group-ids sg-0123456789abcdef0
