@@ -581,10 +581,9 @@ Based on real-world usage, these capabilities would significantly improve Terraf
 ## Additional Resources
 
 ### Internal Documentation
-- **Complete Guide:** `REFACTORING-GUIDE.md` in repository
-- **Quick Reference:** `REFACTORING-CHEATSHEET.md` in repository
-- **Live Example:** `LIVE-REFACTORING-EXAMPLE.md` - real execution walkthrough
-- **Gap Analysis:** `STATE-SURGERY-ANALYSIS.md` - detailed findings
+- **Engineering Gaps:** `REFACTORING-GAPS-ONE-PAGER.md` - Technical brief for gap analysis and feature development
+- **Code Examples:** `modules/web-server/refactoring.tf.example` - Copy-paste examples for all three block types
+- **Repository:** Complete working Terraform Stack with live example execution
 
 ### External Resources
 - [Terraform moved Block Docs](https://developer.hashicorp.com/terraform/language/modules/develop/refactoring)
