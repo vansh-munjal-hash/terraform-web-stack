@@ -182,82 +182,37 @@ terraform-web-stack/
 ├── components.tfcomponent.hcl   # Component definitions
 ├── outputs.tfcomponent.hcl      # Stack outputs
 ├── deployments.tfdeploy.hcl     # Dev and prod deployments
-├── README.md                      # This file
-├── REFACTORING-OVERVIEW.md        # Navigation hub for all refactoring docs
-├── REFACTORING-CHEATSHEET.md      # Quick syntax reference
-├── REFACTORING-GUIDE.md           # Complete how-to guide
-├── LIVE-REFACTORING-EXAMPLE.md    # Hands-on walkthrough
-└── STATE-SURGERY-ANALYSIS.md      # Gap analysis and proposals
+├── README.md                    # This file
+└── TERRAFORM-STACKS-REFACTORING-SUMMARY.md  # Refactoring guide
 ```
 
 ## State Management and Refactoring
 
-This stack includes comprehensive documentation for managing Terraform state changes using `moved`, `removed`, and `import` blocks.
+This stack demonstrates Terraform Stacks state management using `moved`, `removed`, and `import` blocks.
 
-### 📚 Complete Documentation Suite
+### 📖 Complete Reference Guide
 
-**Start here:** [REFACTORING-OVERVIEW.md](REFACTORING-OVERVIEW.md) - Navigation hub for all refactoring docs
+**[TERRAFORM-STACKS-REFACTORING-SUMMARY.md](TERRAFORM-STACKS-REFACTORING-SUMMARY.md)** - Comprehensive guide covering:
+- What works and what doesn't
+- Quick reference tables and decision trees
+- Code examples and best practices
+- Common errors and workarounds
+- Feature gaps and future needs
 
-#### For Daily Use
-- **[REFACTORING-CHEATSHEET.md](REFACTORING-CHEATSHEET.md)** - Quick syntax reference
-- **[modules/web-server/refactoring.tf.example](modules/web-server/refactoring.tf.example)** - Copy-paste code examples
+### Quick Summary
 
-#### For Learning
-- **[REFACTORING-GUIDE.md](REFACTORING-GUIDE.md)** - Complete how-to guide with examples
-- **[LIVE-REFACTORING-EXAMPLE.md](LIVE-REFACTORING-EXAMPLE.md)** - Hands-on walkthrough using all three blocks
+| Block | Purpose | Works? |
+|-------|---------|--------|
+| `moved` | Rename/restructure resources | ✅ Within modules |
+| `removed` | Stop managing (keep running) | ✅ With destroy = false |
+| `import` | Adopt existing resources | ✅ Per deployment |
 
-#### For Understanding Capabilities
-- **[STATE-SURGERY-ANALYSIS.md](STATE-SURGERY-ANALYSIS.md)** - What works, what doesn't, gaps, and proposals
+**Key Limitations:**
+- ❌ Cannot move resources between deployments (dev → prod)
+- ❌ Cannot move resources between components or stacks
+- ⚠️ All deployments affected simultaneously (can't test dev first)
 
-### When to Use Refactoring Blocks
-
-| Block | Purpose | Example Use Case |
-|-------|---------|------------------|
-| `moved` | Rename/restructure | Rename `aws_instance.web` → `aws_instance.web_server` |
-| `removed` | Stop managing (keep running) | Hand off resource to another team |
-| `import` | Adopt existing resources | Bring manually created EC2 into Terraform |
-
-### Quick Example
-
-Rename an EC2 instance without recreating it:
-
-```hcl
-# modules/web-server/refactoring.tf
-moved {
-  from = aws_instance.web
-  to   = aws_instance.web_server
-}
-
-# Update main.tf to use new name
-resource "aws_instance" "web_server" {
-  # ... existing configuration
-}
-```
-
-Upload and apply:
-
-```bash
-terraform stacks configuration upload \
-  -organization-name=vansh-org \
-  -project-name=Claude-Test \
-  -stack-name=claude-stack-1
-```
-
-### What Works vs What Doesn't
-
-✅ **Supported:**
-- Rename resources within modules
-- Import existing AWS resources
-- Stop managing resources without destroying
-- Convert `count` to `for_each`
-
-❌ **Not Supported (Gaps):**
-- Move resources between deployments (dev → prod)
-- Move resources between components or stacks
-- Test refactoring in dev before applying to prod
-- Declarative cross-boundary resource transfers
-
-See [STATE-SURGERY-ANALYSIS.md](STATE-SURGERY-ANALYSIS.md) for detailed gap analysis and workarounds.
+**See the full guide for details:** [TERRAFORM-STACKS-REFACTORING-SUMMARY.md](TERRAFORM-STACKS-REFACTORING-SUMMARY.md)
 
 ## Cost Breakdown
 
